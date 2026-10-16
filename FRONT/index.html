@@ -1,0 +1,195 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motomar Suporte</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="app">
+        <header class="topbar">
+            <a href="/" class="brand">
+                <div class="brand-logo">M</div>
+                <span>Motomar <small>Suporte de TI</small></span>
+            </a>
+
+            <a href="https://motomarsuporte.web.app/"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="support-link">
+                Suporte oficial ↗
+            </a>
+        </header>
+
+        <main class="workspace">
+            <section class="welcome" id="welcome">
+                <div class="welcome-logo">M</div>
+
+                <h1>Como posso ajudar?</h1>
+
+                <p>
+                    Tire suas dúvidas sobre sistemas, computadores,
+                    impressoras e outros problemas de TI da Motomar.
+                </p>
+
+                <div class="suggestions">
+                    <button class="suggestion"
+                        data-question="Minha impressora não está imprimindo. Como resolver?">
+                        <span>▤</span>
+                        Problema com impressora
+                    </button>
+
+                    <button class="suggestion"
+                        data-question="Estou sem acesso à internet. O que devo verificar?">
+                        <span>⌁</span>
+                        Problema de conexão
+                    </button>
+
+                    <button class="suggestion"
+                        data-question="Não consigo acessar um sistema da empresa. Como proceder?">
+                        <span>⌑</span>
+                        Acesso a sistemas
+                    </button>
+
+                    <button class="suggestion"
+                        data-question="Meu computador está lento. O que posso fazer?">
+                        <span>▣</span>
+                        Computador lento
+                    </button>
+                </div>
+            </section>
+
+            <section class="conversation"
+                     id="conversation"
+                     aria-live="polite">
+            </section>
+
+            <div class="composer-area">
+                <form class="composer" id="chatForm">
+                    <textarea
+                        id="question"
+                        placeholder="Pergunte alguma coisa..."
+                        rows="1"
+                        required
+                    ></textarea>
+
+                    <button type="submit"
+                            class="send-button"
+                            id="sendButton"
+                            aria-label="Enviar mensagem">
+                        ↑
+                    </button>
+                </form>
+
+                <p class="disclaimer">
+                    As respostas dependem da base de conhecimento da equipe de TI.
+                </p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const form = document.getElementById("chatForm");
+        const input = document.getElementById("question");
+        const conversation = document.getElementById("conversation");
+        const welcome = document.getElementById("welcome");
+        const sendButton = document.getElementById("sendButton");
+
+        function addMessage(text, role) {
+            const row = document.createElement("div");
+            row.className = `message-row ${role}`;
+
+            const bubble = document.createElement("div");
+            bubble.className = "message-bubble";
+
+            const label = document.createElement("div");
+            label.className = "message-label";
+            label.textContent = role === "user" ? "Você" : "Motomar Suporte";
+
+            const body = document.createElement("div");
+            body.className = "message-text";
+            body.textContent = text;
+
+            bubble.append(label, body);
+            row.appendChild(bubble);
+            conversation.appendChild(row);
+
+            row.scrollIntoView({ behavior: "smooth", block: "end" });
+
+            return body;
+        }
+
+        async function sendQuestion(question) {
+            question = question.trim();
+
+            if (!question || sendButton.disabled) return;
+
+            welcome.classList.add("hidden");
+            addMessage(question, "user");
+
+            input.value = "";
+            input.style.height = "auto";
+            sendButton.disabled = true;
+
+            const responseElement = addMessage(
+                "processando ...",
+                "assistant"
+            );
+
+            try {
+                const response = await fetch("/perguntar", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ question })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.answer || "Erro ao consultar o assistente."
+                    );
+                }
+
+                responseElement.textContent = data.answer;
+
+            } catch (error) {
+                responseElement.textContent =
+                    error.message || "Não foi possível conectar ao servidor.";
+            } finally {
+                sendButton.disabled = false;
+                input.focus();
+            }
+        }
+
+        form.addEventListener("submit", event => {
+            event.preventDefault();
+            sendQuestion(input.value);
+        });
+
+        input.addEventListener("input", () => {
+            input.style.height = "auto";
+            input.style.height =
+                Math.min(input.scrollHeight, 160) + "px";
+        });
+
+        input.addEventListener("keydown", event => {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                form.requestSubmit();
+            }
+        });
+
+        document.querySelectorAll("[data-question]").forEach(button => {
+            button.addEventListener("click", () => {
+                sendQuestion(button.dataset.question);
+            });
+        });
+    </script>
+</body>
+</html>
