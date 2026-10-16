@@ -1,0 +1,7 @@
+Flask
+gunicorn
+python-dotenv
+pinecone
+langchain
+langchain-google-genai
+langchain-pinecone
