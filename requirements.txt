@@ -7,3 +7,5 @@ langchain-google-genai
 langchain-pinecone
 firebase-admin
 langchain-huggingface
+
+sentence-transformers
