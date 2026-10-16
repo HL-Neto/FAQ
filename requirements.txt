@@ -8,4 +8,7 @@ langchain-pinecone
 firebase-admin
 langchain-huggingface
 
-sentence-transformers
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.7.1+cpu
+sentence-transformers==5.0.0
+langchain-huggingface
